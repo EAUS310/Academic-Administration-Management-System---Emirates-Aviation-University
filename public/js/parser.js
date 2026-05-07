@@ -153,10 +153,19 @@ const SEMESTER_START_MS   = Date.UTC(2026, 0, 19); // 19 Jan 2026
 const SPRING_BREAK_END_MS = Date.UTC(2026, 2, 20); // 20 Mar 2026
 const SPRING_BREAK_DAYS   = 14;
 
+// AME programs subject to the stricter <10% attendance-warning threshold:
+//   - "Applied Bachelors in Aircraft Maintenance Engineering"  (course code: ABAME01F)
+//   - "Higher Diploma in Aircraft Maintenance Engineering"     (course code: HDAME021F)
+// All other programs use the <25% threshold.
 const AME_CODES = new Set(['ABAME01F', 'HDAME021F']);
 function _isAME(courseCode, courseDesc) {
-  if (AME_CODES.has((courseCode || '').trim().toUpperCase())) return true;
-  return (courseDesc || '').toUpperCase().includes('AIRCRAFT MAINTENANCE');
+  const code = (courseCode || '').trim().toUpperCase();
+  if (AME_CODES.has(code)) return true;
+  // Description fallback (when code is missing/unrecognised): must explicitly be
+  // an Applied Bachelor or Higher Diploma in Aircraft Maintenance Engineering.
+  const desc = (courseDesc || '').toUpperCase();
+  if (!desc.includes('AIRCRAFT MAINTENANCE')) return false;
+  return desc.includes('APPLIED BACHELOR') || desc.includes('HIGHER DIPLOMA');
 }
 
 function _parseTimeCol(val) {
@@ -323,14 +332,22 @@ function parseAttendanceFile(arrayBuffer, filename) {
         ame:       _isAME(courseCode, courseDesc),
         absCount:  0,
         lateCount: 0,
-        missedHrs: 0
+        missedHrs: 0,
+        absences:  []
       };
     }
 
     if (attendance === 'absent') {
       const hrs = (endTime - startTime) * 24;
+      const finalHrs = hrs > 0 ? hrs : 1;
       groups[key].absCount++;
-      groups[key].missedHrs += hrs > 0 ? hrs : 1;
+      groups[key].missedHrs += finalHrs;
+      if (dateSerial !== null) {
+        groups[key].absences.push({
+          date:  _serialToISO(dateSerial),
+          hours: Math.round(finalHrs * 10) / 10
+        });
+      }
     } else if (attendance === 'late') {
       groups[key].lateCount++;
     }
@@ -357,16 +374,18 @@ function parseAttendanceFile(arrayBuffer, filename) {
     }
 
     const studentRecord = {
-      id:          g.studentId,
-      name:        g.name,
-      courseCode:  g.courseCode,
-      program:     g.program,
-      ame:         useAMECalc,
-      absences:    g.absCount,
-      lates:       g.lateCount,
-      missedHrs:   g.ame ? Math.round(g.missedHrs * 10) / 10 : null,
-      effAbsences: g.ame ? null : g.absCount + Math.floor(g.lateCount / 3),
-      warnPct:     Math.round(warnPct * 10) / 10
+      id:           g.studentId,
+      name:         g.name,
+      courseCode:   g.courseCode,
+      program:      g.program,
+      ame:          useAMECalc,
+      programIsAME: g.ame,
+      absences:     g.absCount,
+      lates:        g.lateCount,
+      missedHrs:    g.ame ? Math.round(g.missedHrs * 10) / 10 : null,
+      effAbsences:  g.ame ? null : g.absCount + Math.floor(g.lateCount / 3),
+      warnPct:      Math.round(warnPct * 10) / 10,
+      absenceDates: g.absences.slice().sort((a, b) => a.date.localeCompare(b.date))
     };
 
     if (!allModules[g.modCode]) {
