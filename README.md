@@ -1,7 +1,7 @@
 # Academic Registration Management System
 ### Emirates Aviation University — Faculty of Engineering
 
-A browser-based academic administration tool for managing student registrations, attendance, grading analysis, module tracking, and grade appeals for the Faculty of Engineering.
+A browser-based academic administration tool for managing student registrations, attendance, module tracking, grade appeals, and schedule extraction for the Faculty of Engineering.
 
 **Live site:** https://eaus310.github.io/Academic-Administration-Management-System---Emirates-Aviation-University/
 
@@ -26,38 +26,19 @@ The site runs entirely in your browser — there is no backend server, no databa
 - Upload and view attendance data from Excel
 - Filter by program, module, and instructor
 - Highlight students below attendance threshold
-- Attendance Warning column shows 10%, 20%, or 25% warning percentage
+- Attendance Warning column shows warning percentage (threshold: <25% for all programs)
 - Spring Break (9–20 March) excluded from attendance and week number calculations
 - PDF export with centred Warning column
 
-### Grading Analysis
-- Upload grading data (Excel workbook with grades + module metadata sheets)
-- Two-row table format: raw counts + percentages per grade per module
-- Calculates **(F + D + D+)%** adjusted for disciplinary and attendance warning students
-- Highlights modules where (F+D+D+)% ≥ 20% in red
-- Sorts by Program, then by descending (F+D+D+)%
-- Shows Attendance Warning and Disciplinary counts per module
-- Excel download of full grade analysis
+> **Note:** Grading Analysis, Academic Warning Report, Coursework Analysis, and
+> Detailed Module Grading have been moved to a separate project and are no longer
+> part of this tool.
 
-### Academic Warning Report
-- Parses WARNING_DATA sheet from the grading Excel file
-- Cross-references student warning status with their module grades
-- Blue header for student info columns; red header for Final Grades section
-- Module names centred; student names wrap for readability
-- Excel download of the full warning report
-
-### Coursework Analysis
-- Lists all modules with counts of students who failed each component
-- **CW Fail**: students whose CW Gross mark is below a configurable slider threshold
-- **Final Fail**: students whose Final Gross mark is below a configurable slider threshold
-- **Overall Fail**: students with grade letter **F**
-- Sliders update counts instantly (client-side aggregation)
-- Sticky header on scroll; Excel download reflects current slider thresholds
-
-### Detailed Module Grading
-- Raw student-level grade data from the GRADES_DATA sheet
-- Filterable by module; searchable by student name or ID
-- Highlights attendance warning (orange) and disciplinary (purple) students
+### Schedule Extractor
+- Upload the combined aSc timetable PDF (one student per page)
+- Reads the student ID on each page and splits the file into one `<ID>.pdf` per student
+- Flags pages with no class card as blank; resolves duplicate pages to the one with a schedule
+- Downloads a ZIP of the renamed PDFs plus a CSV/XLSX manifest — entirely in the browser
 
 ### Module Trackers
 | Page | Description |
@@ -135,10 +116,7 @@ MES (Module Enrollment Sheet) `.xlsx` workbook with one sheet per program: `EDAE
 ├── public/                       # Deployed to GitHub Pages
 │   ├── index.html                # Redirects to attendance.html
 │   ├── attendance.html/js        # Attendance tracking
-│   ├── grading.html/js           # Grading analysis
-│   ├── warning-report.html/js    # Academic warning report
-│   ├── coursework-analysis.html/js
-│   ├── module-grading.html/js    # Detailed grading
+│   ├── schedule-extractor.html/js # PDF schedule split + rename + manifest
 │   ├── grade-appeal.html/js      # Grade appeal tracker
 │   ├── all-data.html/js          # All attendance data
 │   ├── ame-report.html/js

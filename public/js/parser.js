@@ -153,20 +153,6 @@ const SEMESTER_START_MS   = Date.UTC(2026, 0, 19); // 19 Jan 2026
 const SPRING_BREAK_END_MS = Date.UTC(2026, 2, 20); // 20 Mar 2026
 const SPRING_BREAK_DAYS   = 14;
 
-// AME programs subject to the stricter <10% attendance-warning threshold:
-//   - "Applied Bachelors in Aircraft Maintenance Engineering"  (course code: ABAME01F)
-//   - "Higher Diploma in Aircraft Maintenance Engineering"     (course code: HDAME021F)
-// All other programs use the <25% threshold.
-const AME_CODES = new Set(['ABAME01F', 'HDAME021F']);
-function _isAME(courseCode, courseDesc) {
-  const code = (courseCode || '').trim().toUpperCase();
-  if (AME_CODES.has(code)) return true;
-  // Description fallback (when code is missing/unrecognised): must explicitly be
-  // an Applied Bachelor or Higher Diploma in Aircraft Maintenance Engineering.
-  const desc = (courseDesc || '').toUpperCase();
-  if (!desc.includes('AIRCRAFT MAINTENANCE')) return false;
-  return desc.includes('APPLIED BACHELOR') || desc.includes('HIGHER DIPLOMA');
-}
 
 function _parseTimeCol(val) {
   if (typeof val === 'number') return val;
@@ -329,24 +315,16 @@ function parseAttendanceFile(arrayBuffer, filename) {
         program:   courseDesc,
         modCode,
         modTitle,
-        ame:       _isAME(courseCode, courseDesc),
         absCount:  0,
         lateCount: 0,
-        missedHrs: 0,
         absences:  []
       };
     }
 
     if (attendance === 'absent') {
-      const hrs = (endTime - startTime) * 24;
-      const finalHrs = hrs > 0 ? hrs : 1;
       groups[key].absCount++;
-      groups[key].missedHrs += finalHrs;
       if (dateSerial !== null) {
-        groups[key].absences.push({
-          date:  _serialToISO(dateSerial),
-          hours: Math.round(finalHrs * 10) / 10
-        });
+        groups[key].absences.push({ date: _serialToISO(dateSerial) });
       }
     } else if (attendance === 'late') {
       groups[key].lateCount++;
@@ -362,28 +340,17 @@ function parseAttendanceFile(arrayBuffer, filename) {
     if (!modInfo || modInfo.sessions === 0) continue;
 
     const totalSessions = modInfo.sessions;
-    const isGenModule   = g.modCode.toUpperCase().startsWith('GEN');
-    const useAMECalc    = g.ame && !isGenModule;
-
-    let warnPct;
-    if (useAMECalc) {
-      warnPct = (g.missedHrs / totalSessions) * 100;
-    } else {
-      const effAbs = g.absCount + Math.floor(g.lateCount / 3);
-      warnPct = (effAbs / totalSessions) * 100;
-    }
+    const effAbs = g.absCount + Math.floor(g.lateCount / 3);
+    const warnPct = (effAbs / totalSessions) * 100;
 
     const studentRecord = {
       id:           g.studentId,
       name:         g.name,
       courseCode:   g.courseCode,
       program:      g.program,
-      ame:          useAMECalc,
-      programIsAME: g.ame,
       absences:     g.absCount,
       lates:        g.lateCount,
-      missedHrs:    g.ame ? Math.round(g.missedHrs * 10) / 10 : null,
-      effAbsences:  g.ame ? null : g.absCount + Math.floor(g.lateCount / 3),
+      effAbsences:  effAbs,
       warnPct:      Math.round(warnPct * 10) / 10,
       absenceDates: g.absences.slice().sort((a, b) => a.date.localeCompare(b.date))
     };
