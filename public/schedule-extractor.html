@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Extractor</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Schedule Extractor — page-specific styles ── */
+    .se-wrap { max-width: 1100px; margin: 0 auto; }
+    .se-intro {
+      background:#fff; border:1px solid #eee; border-radius:10px; padding:18px 20px;
+      margin-bottom:18px; font-size:13.5px; color:#555; line-height:1.6;
+    }
+    .se-intro h2 { margin:0 0 6px; font-size:16px; color:#222; }
+    .se-privacy {
+      display:inline-flex; align-items:center; gap:6px; margin-top:10px;
+      background:#eafaf0; color:#1a7f43; border:1px solid #b9e7c9;
+      border-radius:6px; padding:5px 10px; font-size:12px; font-weight:600;
+    }
+    .se-options { display:flex; gap:18px; flex-wrap:wrap; margin:14px 0 4px; }
+    .se-check { display:flex; align-items:center; gap:8px; font-size:13px; color:#444; cursor:pointer; }
+    .se-check input { accent-color:#C8102E; width:16px; height:16px; }
+
+    .se-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin:18px 0; }
+    .se-stat { background:#fff; border:1px solid #eee; border-radius:10px; padding:14px 16px; text-align:center; }
+    .se-stat .num { font-size:26px; font-weight:700; color:#222; line-height:1; }
+    .se-stat .lbl { font-size:11.5px; color:#888; margin-top:6px; text-transform:uppercase; letter-spacing:.4px; }
+    .se-stat.ready .num { color:#1a7f43; }
+    .se-stat.held  .num { color:#b8860b; }
+    .se-stat.warn  .num { color:#C8102E; }
+
+    .se-actions { display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 20px; }
+    .se-btn {
+      display:inline-flex; align-items:center; gap:8px; border:none; border-radius:8px;
+      padding:11px 18px; font-size:13.5px; font-weight:600; cursor:pointer; color:#fff; background:#C8102E;
+    }
+    .se-btn.secondary { background:#fff; color:#C8102E; border:1.5px solid #C8102E; }
+    .se-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+    .se-table-scroll { max-height:460px; overflow:auto; border:1px solid #eee; border-radius:10px; background:#fff; }
+    table.se-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .se-table thead th {
+      position:sticky; top:0; background:#faf7f7; color:#555; text-align:left;
+      padding:10px 14px; border-bottom:1px solid #eee; font-weight:600; z-index:1;
+    }
+    .se-table td { padding:9px 14px; border-bottom:1px solid #f3f3f3; color:#333; }
+    .se-table tbody tr:hover { background:#fcfafa; }
+    .se-badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+    .se-badge.ready { background:#eafaf0; color:#1a7f43; }
+    .se-badge.held  { background:#fdf6e3; color:#b8860b; }
+    .se-badge.dup   { background:#eef3fb; color:#3563b0; }
+    .se-badge.noid  { background:#fdecec; color:#C8102E; }
+
+    .se-filterbar { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
+    .se-filter {
+      display:inline-flex; align-items:center; gap:7px; background:#fff; border:1.5px solid #e3e3e3;
+      border-radius:20px; padding:7px 14px; font-size:12.5px; font-weight:600; color:#666; cursor:pointer;
+    }
+    .se-filter:hover { border-color:#C8102E; color:#C8102E; }
+    .se-filter.active { background:#C8102E; border-color:#C8102E; color:#fff; }
+    .se-filter .cnt {
+      background:rgba(0,0,0,.08); border-radius:12px; padding:1px 7px; font-size:11px; min-width:18px; text-align:center;
+    }
+    .se-filter.active .cnt { background:rgba(255,255,255,.25); }
+
+    .se-progress-wrap { background:#eee; border-radius:6px; height:8px; margin:14px 0; overflow:hidden; display:none; }
+    .se-progress-bar  { background:#C8102E; height:100%; width:0; transition:width .2s; }
+    .se-status-line   { font-size:12.5px; color:#888; margin-top:6px; min-height:16px; }
+    .se-hidden { display:none !important; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="header-left">
+
+    <span class="header-title">Schedule Extractor</span>
+  </div>
+</header>
+
+<!-- ── Body layout: sidebar + content ── -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <nav>
+      <a href="attendance.html" class="nav-item">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </span>
+        <span class="nav-label">Attendance Warning</span>
+      </a>
+      <a href="grade-appeal.html" class="nav-item">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+        </span>
+        <span class="nav-label">Grade Appeal Tracker</span>
+      </a>
+      <a href="schedule-extractor.html" class="nav-item active">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            <circle cx="6" cy="14" r="2"/><circle cx="6" cy="20" r="2" transform="translate(0 -6)"/><line x1="8" y1="13" x2="20" y2="6"/>
+          </svg>
+        </span>
+        <span class="nav-label">Schedule Extractor</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="content">
+    <div class="content-inner">
+      <div class="se-wrap">
+
+        <!-- Intro -->
+        <div class="se-intro">
+          <h2>Split &amp; rename student schedules</h2>
+          Upload the combined <strong>aSc timetable PDF</strong> (one student per page). This tool reads the
+          <strong>student ID</strong> printed on each page, splits the file into one PDF per student named
+          <code>&lt;ID&gt;.pdf</code>, and builds a manifest. Pages with no scheduled modules are flagged as
+          <em>blank</em>.
+          <div class="se-privacy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            100% in your browser — the PDF is never uploaded anywhere.
+          </div>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('pdfInput').click()">
+          <div class="drop-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p><strong>Click to select</strong> or drag &amp; drop</p>
+          <p class="drop-sub">.pdf only — combined student schedule</p>
+          <input type="file" id="pdfInput" accept="application/pdf,.pdf" style="display:none">
+        </div>
+
+        <div id="selectedFile" style="display:none;font-size:13px;color:#555;margin:12px 2px;"></div>
+
+        <!-- Options -->
+        <div class="se-options">
+          <label class="se-check"><input type="checkbox" id="optFolders" checked> Separate <code>ready/</code> &amp; <code>held/</code> folders in the ZIP</label>
+          <label class="se-check"><input type="checkbox" id="optManifestInZip" checked> Include <code>manifest.csv</code> inside the ZIP</label>
+        </div>
+
+        <!-- Progress -->
+        <div class="se-progress-wrap" id="progressWrap"><div class="se-progress-bar" id="progressBar"></div></div>
+        <div class="se-status-line" id="statusLine"></div>
+
+        <!-- Results -->
+        <div id="results" class="se-hidden">
+          <div class="se-stats">
+            <div class="se-stat"><div class="num" id="stPages">0</div><div class="lbl">Pages</div></div>
+            <div class="se-stat"><div class="num" id="stStudents">0</div><div class="lbl">Students</div></div>
+            <div class="se-stat ready"><div class="num" id="stReady">0</div><div class="lbl">With schedule</div></div>
+            <div class="se-stat held"><div class="num" id="stHeld">0</div><div class="lbl">Blank</div></div>
+            <div class="se-stat warn"><div class="num" id="stIssues">0</div><div class="lbl">Issues</div></div>
+          </div>
+
+          <div class="se-actions">
+            <button class="se-btn" id="btnZip" onclick="downloadZip()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download PDFs (ZIP)
+            </button>
+            <button class="se-btn secondary" onclick="downloadManifest('csv')">Download manifest (CSV)</button>
+            <button class="se-btn secondary" onclick="downloadManifest('xlsx')">Download manifest (XLSX)</button>
+          </div>
+
+          <div class="se-filterbar" id="filterBar">
+            <button class="se-filter active" data-filter="all">All <span class="cnt" id="cAll">0</span></button>
+            <button class="se-filter" data-filter="ready">With schedule <span class="cnt" id="cReady">0</span></button>
+            <button class="se-filter" data-filter="held">Blank <span class="cnt" id="cHeld">0</span></button>
+            <button class="se-filter" data-filter="issues">Issues <span class="cnt" id="cIssues">0</span></button>
+          </div>
+
+          <div class="se-table-scroll">
+            <table class="se-table">
+              <thead><tr><th>#</th><th>Student ID</th><th>Name</th><th>Page</th><th>Email</th><th>Status</th></tr></thead>
+              <tbody id="resBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Libraries (CDN, client-side) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="schedule-extractor.js"></script>
+</body>
+</html>

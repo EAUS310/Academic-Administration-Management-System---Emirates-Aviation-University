@@ -178,7 +178,7 @@ function _toDateSerial(val) {
       const ms = Date.UTC(+m[1], +m[2] - 1, +m[3]);
       return Math.floor(ms / 86400000) + 25569;
     }
-    // DD/MM/YYYY or DD-MM-YYYY (assume day-first since that's the EAU locale)
+    // DD/MM/YYYY or DD-MM-YYYY (day-first format)
     m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
     if (m) {
       const ms = Date.UTC(+m[3], +m[2] - 1, +m[1]);

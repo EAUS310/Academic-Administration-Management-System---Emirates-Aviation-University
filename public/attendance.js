@@ -284,7 +284,7 @@ async function generatePDF() {
   const pageH  = doc.internal.pageSize.getHeight();
   const margin = 14;
 
-  const logo       = await loadLogo('EAU_Logo_Red.png');
+  const logo       = null;
   const logoH      = 13;
   const logoW      = logo ? (logo.w / logo.h) * logoH : 0;
   const weekNumber = allData && allData.weekNumber ? allData.weekNumber : null;

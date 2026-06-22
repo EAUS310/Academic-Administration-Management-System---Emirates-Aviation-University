@@ -34,16 +34,7 @@ header {
 }
 .header-left { display: flex; align-items: center; gap: 0; }
 
-.logo-link { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
-.eau-logo  { height: 38px; width: auto; display: block; }
 
-.header-divider {
-  width: 1px;
-  height: 30px;
-  background: rgba(255,255,255,.3);
-  margin: 0 16px;
-  flex-shrink: 0;
-}
 
 .header-title {
   font-size: 15px;
