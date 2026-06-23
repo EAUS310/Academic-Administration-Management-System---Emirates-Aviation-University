@@ -85,7 +85,7 @@ function _parseStudentSheet(workbook, sheetConfig) {
     if (count > bestCount) { bestCount = count; namesRow = rows[i]; }
   }
 
-  const SKIP = ['MODULE ENROLLMENT', 'TO BE REGISTERED', 'SPRING 2026', 'SECTION', 'CURRENT SEMESTER'];
+  const SKIP = ['MODULE ENROLLMENT', 'TO BE REGISTERED', 'SPRING 2026', 'SUMMER 2026', 'SECTION', 'CURRENT SEMESTER'];
   const modList = [];
   for (let j = modStart; j <= modEnd; j++) {
     const code = clean(String(codesRow[j] ?? ''));
@@ -149,9 +149,8 @@ function parseStudentFile(arrayBuffer) {
 
 // ── Attendance file parser (from attendanceService.js) ────────────────────────
 
-const SEMESTER_START_MS   = Date.UTC(2026, 0, 19); // 19 Jan 2026
-const SPRING_BREAK_END_MS = Date.UTC(2026, 2, 20); // 20 Mar 2026
-const SPRING_BREAK_DAYS   = 14;
+const SEMESTER_START_MS   = Date.UTC(2026, 5, 8);  // 08 Jun 2026 (Summer 2026)
+// Summer 2026 has no mid-semester break.
 
 
 function _parseTimeCol(val) {
@@ -296,12 +295,7 @@ function parseAttendanceFile(arrayBuffer, filename) {
 
     const dateSerial = _toDateSerial(tutDate);
 
-    // Skip Spring Break: 9 March – 20 March (inclusive)
     if (dateSerial !== null) {
-      const d = new Date((dateSerial - 25569) * 86400000);
-      const m = d.getUTCMonth() + 1, day = d.getUTCDate();
-      if (m === 3 && day >= 9 && day <= 20) continue;
-
       if (dateSerial < minDateSerial) minDateSerial = dateSerial;
       if (dateSerial > maxDateSerial) maxDateSerial = dateSerial;
     }
@@ -386,9 +380,8 @@ function parseAttendanceFile(arrayBuffer, filename) {
 
   let weekNumber = 1;
   if (maxDateSerial !== -Infinity) {
-    const maxMs  = (maxDateSerial - 25569) * 86400 * 1000;
-    let daysDiff = Math.floor((maxMs - SEMESTER_START_MS) / 86400000);
-    if (maxMs > SPRING_BREAK_END_MS) daysDiff -= SPRING_BREAK_DAYS;
+    const maxMs    = (maxDateSerial - 25569) * 86400 * 1000;
+    const daysDiff = Math.floor((maxMs - SEMESTER_START_MS) / 86400000);
     weekNumber = Math.max(1, Math.floor(daysDiff / 7) + 1);
   }
 

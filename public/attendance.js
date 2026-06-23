@@ -305,7 +305,7 @@ async function generatePDF() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(27, 58, 92);
-    doc.text('FOE Attendance Warning List', textX, 15);
+    doc.text('FOE & AME Attendance Warning List', textX, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(100, 100, 100);

@@ -55,7 +55,7 @@ It is a **static, browser-only site** — no backend server, no database, no acc
 ## Local Development
 No server needed — open `public/index.html` directly, or serve `public/` with any static server (`python -m http.server`, VS Code Live Server, etc.). `npm install && npm start` only runs the **legacy** Express stack on port 3000 and is not required.
 
-## Semester Constants (Spring 2026)
-- Semester start: 19 Jan 2026
-- Spring Break: 9–20 Mar 2026 (14 days, excluded from attendance and week-number calculations)
+## Semester Constants (Summer 2026)
+- Semester start: 08 Jun 2026
+- No mid-semester break (Summer term)
 - Attendance warning threshold: **<25%** for all programs (including AME)
